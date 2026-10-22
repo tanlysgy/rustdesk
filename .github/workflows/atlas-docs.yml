@@ -271,7 +271,14 @@ jobs:
                   dst = stage / rel.with_suffix(".md")
                   dst.parent.mkdir(parents=True, exist_ok=True)
                   try:
-                      shutil.copy(p, dst)
+                      # Some upstreams ship non-UTF-8 Markdown; normalise so
+                      # mkdocs cannot abort the whole build on one bad file.
+                      raw = p.read_bytes()
+                      try:
+                          text = raw.decode("utf-8")
+                      except UnicodeDecodeError:
+                          text = raw.decode("utf-8", "replace")
+                      dst.write_text(text, encoding="utf-8")
                       picked += 1
                   except OSError:
                       pass
